@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>六三角函数 · 单位圆 | 含渐近线 + 紧凑纵轴 (无tan89°特殊标注)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f9ff 0%, #e3eaf5 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Inter', system-ui, sans-serif;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.68);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.25);
+        }
+
+        .main-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .circle-area {
+            flex: 1.2;
+            min-width: 380px;
+            background: #ffffffdd;
+            backdrop-filter: blur(4px);
+            border-radius: 1.8rem;
+            padding: 1rem;
+            box-shadow: 0 10px 22px rgba(0,0,0,0.1);
+        }
+
+        .graphs-area {
+            flex: 2.5;
+            min-width: 600px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .graph-card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: 0.1s;
+        }
+        .graph-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 0.5rem 0.3rem 0.5rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #eef2f8;
+        }
+        .color-badge {
+            width: 14px;
+            height: 14px;
+            border-radius: 20px;
+        }
+        .graph-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #fefefe;
+            border-radius: 1rem;
+            margin-top: 4px;
+        }
+        canvas#unitCircleCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 1.2rem;
+            width: 100%;
+            height: auto;
+        }
+        .controls {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            background: #f1f4f9cc;
+            backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            padding: 0.6rem 1.2rem;
+        }
+        button {
+            background: #1e3a5f;
+            border: none;
+            padding: 0.45rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 0.9rem;
+        }
+        button:hover { background: #0f2b44; transform: scale(0.96); }
+        .slider-container {
+            background: #ffffffc9;
+            padding: 0.2rem 1rem;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        input { width: 240px; cursor: pointer; }
+        .angle-value {
+            font-family: monospace;
+            font-weight: bold;
+            background: #1e2a3a20;
+            padding: 4px 12px;
+            border-radius: 2rem;
+            min-width: 85px;
+            text-align: center;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .inf-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 8px;
+            color: #4a5f7a;
+            background: #eef3fc80;
+            border-radius: 1rem;
+            padding: 4px;
+        }
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 1rem;
+            color: #1f3b4c;
+        }
+        @media (max-width: 960px) { .graphs-area { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 720px) { .graphs-area { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="main-grid">
+        <!-- 单位圆区域 -->
+        <div class="circle-area">
+            <canvas id="unitCircleCanvas" width="480" height="480" style="width:100%; height:auto; max-width:480px; aspect-ratio:1/1"></canvas>
+            <div class="inf-note">📐 单位圆 | 正切/正割线延伸至无穷 → 图像含渐近线 (虚线) + 紧凑纵轴，曲线自然逼近渐近线后断裂</div>
+        </div>
+
+        <!-- 右侧六函数图像网格：包含渐近线（虚线）且纵轴紧凑，无特殊角度标注 -->
+        <div class="graphs-area">
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#e34234;"></span> sin θ · 正弦</div><canvas id="sinCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#2c7da0;"></span> cos θ · 余弦</div><canvas id="cosCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#e67e22;"></span> tan θ · 正切 (纵轴 ±3.2，渐近线虚线)</div><canvas id="tanCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#27ae60;"></span> cot θ · 余切 (纵轴 ±3.2，渐近线虚线)</div><canvas id="cotCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#9b59b6;"></span> sec θ · 正割 (纵轴 ±3.6，渐近线虚线)</div><canvas id="secCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+            <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#e84393;"></span> csc θ · 余割 (纵轴 ±3.6，渐近线虚线)</div><canvas id="cscCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="playBtn">▶ 动画</button>
+        <button id="pauseBtn">⏸ 暂停</button>
+        <button id="resetBtn">⟳ 重置</button>
+        <div class="slider-container"><span>θ =</span><input type="range" id="thetaSlider" min="0" max="360" step="0.1" value="0"><span id="angleDisplay" class="angle-value">0.0°</span></div>
+        <div class="legend">🔴sin 🔵cos 🟠tan 🟢cot 🟣sec 🌸csc &nbsp;&nbsp;| 渐近线为红色虚线 + ∞ 符号，曲线自然逼近并断裂 (无 tan89° 特殊标注)</div>
+    </div>
+    <footer>✔ 含渐近线 (垂直虚线) + 紧凑纵轴 (tan/cot: -3.2~3.2, sec/csc: -3.6~3.6)。曲线逼近渐近线后断裂，所有函数统一风格，无单独角度数值标注。</footer>
+</div>
+
+<script>
+    (function(){
+        // ----- DOM 元素 -----
+        const circleCanvas = document.getElementById('unitCircleCanvas');
+        const ctxCircle = circleCanvas.getContext('2d');
+        const sinCanvas = document.getElementById('sinCanvas');
+        const cosCanvas = document.getElementById('cosCanvas');
+        const tanCanvas = document.getElementById('tanCanvas');
+        const cotCanvas = document.getElementById('cotCanvas');
+        const secCanvas = document.getElementById('secCanvas');
+        const cscCanvas = document.getElementById('cscCanvas');
+        const ctxSin = sinCanvas.getContext('2d');
+        const ctxCos = cosCanvas.getContext('2d');
+        const ctxTan = tanCanvas.getContext('2d');
+        const ctxCot = cotCanvas.getContext('2d');
+        const ctxSec = secCanvas.getContext('2d');
+        const ctxCsc = cscCanvas.getContext('2d');
+
+        const thetaSlider = document.getElementById('thetaSlider');
+        const angleDisplay = document.getElementById('angleDisplay');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let angleDeg = 0;
+        let animationId = null;
+        let isAnimating = false;
+        const SPEED = 1.0; // 度/帧
+
+        // 单位圆画布自适应
+        let circleSize = 480;
+        let centerX = 240, centerY = 240, radius = 200;
+
+        function updateCircleSize() {
+            const rect = circleCanvas.getBoundingClientRect();
+            const w = rect.width;
+            circleCanvas.width = w;
+            circleCanvas.height = w;
+            circleSize = w;
+            centerX = w/2;
+            centerY = w/2;
+            radius = Math.min(centerX, centerY) * 0.86;
+        }
+        window.addEventListener('resize', () => { updateCircleSize(); drawAll(); });
+
+        // 纵轴范围 (紧凑以便清晰看到图像逼近渐近线后断裂)
+        const RANGES = {
+            sin: { min: -1.2, max: 1.2 },
+            cos: { min: -1.2, max: 1.2 },
+            tan: { min: -3.2, max: 3.2 },
+            cot: { min: -3.2, max: 3.2 },
+            sec: { min: -3.6, max: 3.6 },
+            csc: { min: -3.6, max: 3.6 }
+        };
+        
+        // 历史数据 (0~360度 整数索引)
+        let history = {
+            sin: new Array(361).fill(0),
+            cos: new Array(361).fill(0),
+            tan: new Array(361).fill(0),
+            cot: new Array(361).fill(0),
+            sec: new Array(361).fill(0),
+            csc: new Array(361).fill(0)
+        };
+        
+        function degToRad(deg) { return deg * Math.PI / 180; }
+        
+        // 安全计算三角函数，超出纵轴范围一定比例后置NaN，使得图像在边界断裂，体现逼近渐近线后断开
+        function computeAllTrig(deg) {
+            const rad = degToRad(deg);
+            const sinVal = Math.sin(rad);
+            const cosVal = Math.cos(rad);
+            let tanVal = Math.tan(rad);
+            let cotVal = (Math.abs(sinVal) < 1e-10) ? NaN : cosVal / sinVal;
+            let secVal = (Math.abs(cosVal) < 1e-10) ? NaN : 1 / cosVal;
+            let cscVal = (Math.abs(sinVal) < 1e-10) ? NaN : 1 / sinVal;
+            
+            // 裁剪策略：超出纵轴范围上限 * 1.05 后变为NaN，使曲线在靠近渐近线时断裂
+            if (Math.abs(tanVal) > RANGES.tan.max * 1.05) tanVal = NaN;
+            if (Math.abs(cotVal) > RANGES.cot.max * 1.05) cotVal = NaN;
+            if (Math.abs(secVal) > RANGES.sec.max * 1.05) secVal = NaN;
+            if (Math.abs(cscVal) > RANGES.csc.max * 1.05) cscVal = NaN;
+            
+            return { sin: sinVal, cos: cosVal, tan: tanVal, cot: cotVal, sec: secVal, csc: cscVal };
+        }
+        
+        // 更新历史 (逐步绘制)
+        function updateHistoryUpTo(currentDeg) {
+            const maxInt = Math.min(360, Math.floor(currentDeg));
+            for (let d = 0; d <= maxInt; d++) {
+                const trig = computeAllTrig(d);
+                history.sin[d] = trig.sin;
+                history.cos[d] = trig.cos;
+                history.tan[d] = trig.tan;
+                history.cot[d] = trig.cot;
+                history.sec[d] = trig.sec;
+                history.csc[d] = trig.csc;
+            }
+            if (currentDeg >= 359.9) {
+                for (let d = 0; d <= 360; d++) {
+                    const trig = computeAllTrig(d);
+                    history.sin[d] = trig.sin;
+                    history.cos[d] = trig.cos;
+                    history.tan[d] = trig.tan;
+                    history.cot[d] = trig.cot;
+                    history.sec[d] = trig.sec;
+                    history.csc[d] = trig.csc;
+                }
+            }
+        }
+        
+        // 映射函数
+        function mapDegToX(deg, width) { return (deg / 360) * width; }
+        function mapValueToY(value, height, rangeMin, rangeMax) {
+            if (isNaN(value)) return -1000;
+            let v = Math.min(rangeMax, Math.max(rangeMin, value));
+            const t = (v - rangeMin) / (rangeMax - rangeMin);
+            return height * (1 - t);
+        }
+        
+        // 绘制单个图像 + 渐近线 (虚线) + ∞ 符号，无特殊角度数值标注
+        function drawOneGraph(ctx, width, height, dataArray, color, range, funcName, currentDeg) {
+            ctx.clearRect(0, 0, width, height);
+            ctx.save();
+            // 背景网格
+            ctx.strokeStyle = "#cdd8e8";
+            ctx.lineWidth = 0.6;
+            let step = (range.max - range.min) <= 3 ? 0.5 : 1;
+            for (let val = Math.ceil(range.min); val <= range.max; val += step) {
+                const y = mapValueToY(val, height, range.min, range.max);
+                if (y >=0 && y <= height) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+                }
+            }
+            // 垂直辅助线 (每45度浅色)
+            for (let deg = 0; deg <= 360; deg += 45) {
+                const x = mapDegToX(deg, width);
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height);
+                ctx.strokeStyle = "#cdd7e6"; ctx.stroke();
+            }
+            // X轴
+            const yZero = mapValueToY(0, height, range.min, range.max);
+            ctx.beginPath(); ctx.moveTo(0, yZero); ctx.lineTo(width, yZero);
+            ctx.strokeStyle = "#5a6e8a"; ctx.lineWidth = 1.5; ctx.stroke();
+            // Y轴
+            const xZero = mapDegToX(0, width);
+            ctx.beginPath(); ctx.moveTo(xZero, 0); ctx.lineTo(xZero, height);
+            ctx.strokeStyle = "#5a6e8a"; ctx.lineWidth = 1.2; ctx.stroke();
+            
+            // 坐标轴文字标注
+            ctx.font = "10px 'Segoe UI'";
+            ctx.fillStyle = "#3a5470";
+            ctx.fillText("0°", xZero-12, yZero-3);
+            ctx.fillText("90°", mapDegToX(90, width)-8, yZero-4);
+            ctx.fillText("180°", mapDegToX(180, width)-12, yZero-4);
+            ctx.fillText("270°", mapDegToX(270, width)-12, yZero-4);
+            ctx.fillText("360°", mapDegToX(360, width)-14, yZero-4);
+            for (let val = Math.ceil(range.min); val <= range.max; val += step) {
+                if (val >= range.min && val <= range.max) {
+                    const yv = mapValueToY(val, height, range.min, range.max);
+                    if (yv >= 0 && yv <= height) {
+                        ctx.fillStyle = "#4e627c";
+                        ctx.fillText(val.toString(), xZero+4, yv+3);
+                    }
+                }
+            }
+            
+            // 绘制渐近线 (垂直虚线)
+            let asymptoteAngles = [];
+            if (funcName === 'tan' || funcName === 'sec') asymptoteAngles = [90, 270];
+            if (funcName === 'cot' || funcName === 'csc') asymptoteAngles = [0, 180, 360];
+            if (funcName === 'sec') asymptoteAngles = [90, 270];
+            if (funcName === 'csc') asymptoteAngles = [0, 180, 360];
+            const uniqueAsymp = [...new Set(asymptoteAngles)];
+            ctx.save();
+            ctx.setLineDash([6, 8]);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "#d9534f";
+            for (let ang of uniqueAsymp) {
+                const xLine = mapDegToX(ang, width);
+                if (xLine >= 0 && xLine <= width) {
+                    ctx.beginPath(); ctx.moveTo(xLine, 0); ctx.lineTo(xLine, height);
+                    ctx.stroke();
+                }
+            }
+            ctx.setLineDash([]);
+            ctx.restore();
+            
+            // 绘制曲线 (逐点连接，遇到NaN则断开，自然逼近渐近线)
+            ctx.beginPath();
+            ctx.lineWidth = 2.2;
+            ctx.strokeStyle = color;
+            let first = true;
+            for (let xDeg = 0; xDeg <= 360; xDeg++) {
+                let val = dataArray[xDeg];
+                if (isNaN(val)) { 
+                    first = true; 
+                    continue; 
+                }
+                const xc = mapDegToX(xDeg, width);
+                const yc = mapValueToY(val, height, range.min, range.max);
+                if (first) { 
+                    ctx.moveTo(xc, yc); 
+                    first = false; 
+                } else { 
+                    ctx.lineTo(xc, yc); 
+                }
+            }
+            ctx.stroke();
+            
+            // 渐近线旁标注 ∞ 符号
+            for (let ang of uniqueAsymp) {
+                const xAsy = mapDegToX(ang, width);
+                if (xAsy >= 0 && xAsy <= width) {
+                    ctx.font = "bold 14px 'Segoe UI'";
+                    ctx.fillStyle = "#c44536";
+                    ctx.fillText("∞", xAsy-7, yZero-14);
+                    ctx.fillText("∞", xAsy-7, yZero+18);
+                }
+            }
+            
+            // 当前角度游标
+            const cursorX = mapDegToX(currentDeg, width);
+            ctx.beginPath(); ctx.moveTo(cursorX, 0); ctx.lineTo(cursorX, height);
+            ctx.strokeStyle = "#ffb347"; ctx.lineWidth = 1.8; ctx.setLineDash([5,6]); ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 当前数值点 (显示数值，但不标注特定角度如89°)
+            const curTrig = computeAllTrig(currentDeg);
+            let currentVal = 0;
+            switch(funcName) {
+                case 'sin': currentVal = curTrig.sin; break;
+                case 'cos': currentVal = curTrig.cos; break;
+                case 'tan': currentVal = curTrig.tan; break;
+                case 'cot': currentVal = curTrig.cot; break;
+                case 'sec': currentVal = curTrig.sec; break;
+                case 'csc': currentVal = curTrig.csc; break;
+            }
+            if (!isNaN(currentVal) && Math.abs(currentVal) <= range.max + 0.3) {
+                const dotY = mapValueToY(currentVal, height, range.min, range.max);
+                if (dotY >= 0 && dotY <= height) {
+                    ctx.beginPath(); ctx.arc(cursorX, dotY, 4.5, 0, 2*Math.PI);
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(cursorX, dotY, 2, 0, 2*Math.PI); ctx.fill();
+                    ctx.fillStyle = color; ctx.font = "bold 9px monospace";
+                    ctx.fillText(`${currentVal.toFixed(3)}`, cursorX+6, dotY-5);
+                }
+            } else if (isNaN(currentVal) && (funcName === 'tan' || funcName === 'cot' || funcName === 'sec' || funcName === 'csc')) {
+                // 在渐近线位置显示±∞符号 (通用，无特定角度)
+                ctx.font = "bold 12px monospace";
+                ctx.fillStyle = "#d9534f";
+                ctx.fillText("±∞", cursorX+5, yZero-10);
+            }
+            ctx.restore();
+        }
+        
+        // ---------------- 单位圆绘制 (包含几何意义) ----------------
+        function drawUnitCircle() {
+            if (!ctxCircle) return;
+            ctxCircle.clearRect(0, 0, circleSize, circleSize);
+            ctxCircle.save();
+            ctxCircle.beginPath(); ctxCircle.arc(centerX, centerY, radius, 0, 2*Math.PI);
+            ctxCircle.fillStyle = "#fffbf5"; ctxCircle.fill();
+            ctxCircle.strokeStyle = "#2c3e66"; ctxCircle.lineWidth = 2; ctxCircle.stroke();
+            // 坐标轴
+            ctxCircle.beginPath(); ctxCircle.moveTo(centerX - radius - 18, centerY); ctxCircle.lineTo(centerX + radius + 18, centerY);
+            ctxCircle.moveTo(centerX, centerY - radius - 18); ctxCircle.lineTo(centerX, centerY + radius + 18);
+            ctxCircle.strokeStyle = "#657c9a"; ctxCircle.lineWidth = 1.4; ctxCircle.stroke();
+            ctxCircle.font = "12px 'Segoe UI'";
+            ctxCircle.fillStyle = "#2c3e66";
+            ctxCircle.fillText("x (cos)", centerX + radius + 5, centerY - 3);
+            ctxCircle.fillText("y (sin)", centerX + 5, centerY - radius - 8);
+            ctxCircle.fillText("0", centerX + radius + 4, centerY - 2);
+            ctxCircle.fillText("1", centerX + radius - 6, centerY - 8);
+            ctxCircle.fillText("-1", centerX - radius + 6, centerY - 8);
+            ctxCircle.fillText("π/2", centerX - 10, centerY - radius - 5);
+            ctxCircle.fillText("π", centerX - radius - 12, centerY + 4);
+            ctxCircle.fillText("3π/2", centerX - 8, centerY + radius + 12);
+            
+            const rad = degToRad(angleDeg);
+            const px = centerX + radius * Math.cos(rad);
+            const py = centerY - radius * Math.sin(rad);
+            ctxCircle.beginPath(); ctxCircle.moveTo(centerX, centerY); ctxCircle.lineTo(px, py);
+            ctxCircle.strokeStyle = "#e67e22"; ctxCircle.lineWidth = 2.5; ctxCircle.stroke();
+            
+            // 正弦 / 余弦投影
+            ctxCircle.beginPath(); ctxCircle.moveTo(px, py); ctxCircle.lineTo(px, centerY); ctxCircle.strokeStyle = "#e34234"; ctxCircle.setLineDash([5,4]); ctxCircle.stroke();
+            ctxCircle.beginPath(); ctxCircle.moveTo(px, py); ctxCircle.lineTo(centerX, py); ctxCircle.strokeStyle = "#2c7da0"; ctxCircle.stroke();
+            ctxCircle.setLineDash([]);
+            
+            // 正切线
+            const tanXline = centerX + radius;
+            if (Math.abs(Math.cos(rad)) > 1e-5) {
+                const tanVal = Math.tan(rad);
+                const tanYpoint = centerY - radius * tanVal;
+                ctxCircle.beginPath(); ctxCircle.moveTo(tanXline, centerY); ctxCircle.lineTo(tanXline, tanYpoint);
+                ctxCircle.strokeStyle = "#e67e22"; ctxCircle.lineWidth = 2; ctxCircle.stroke();
+                ctxCircle.beginPath(); ctxCircle.arc(tanXline, tanYpoint, 5, 0, 2*Math.PI); ctxCircle.fillStyle = "#e67e22"; ctxCircle.fill();
+                ctxCircle.fillStyle = "#e67e22"; ctxCircle.font = "11px"; ctxCircle.fillText(`tan=${Math.tan(rad).toFixed(2)}`, tanXline+5, tanYpoint-6);
+            }
+            // 余切线
+            const cotYline = centerY - radius;
+            if (Math.abs(Math.sin(rad)) > 1e-5) {
+                const cotVal = 1 / Math.tan(rad);
+                const cotXpoint = centerX + radius * cotVal;
+                ctxCircle.beginPath(); ctxCircle.moveTo(centerX, cotYline); ctxCircle.lineTo(cotXpoint, cotYline);
+                ctxCircle.strokeStyle = "#27ae60"; ctxCircle.lineWidth = 2; ctxCircle.stroke();
+                ctxCircle.beginPath(); ctxCircle.arc(cotXpoint, cotYline, 5, 0, 2*Math.PI); ctxCircle.fillStyle = "#27ae60"; ctxCircle.fill();
+                ctxCircle.fillStyle = "#27ae60"; ctxCircle.fillText(`cot=${(1/Math.tan(rad)).toFixed(2)}`, cotXpoint+5, cotYline-6);
+            }
+            const trigCurr = computeAllTrig(angleDeg);
+            ctxCircle.font = "11px monospace";
+            ctxCircle.fillStyle = "#9b59b6"; ctxCircle.fillText(`sec=${trigCurr.sec.toFixed(2)}`, centerX+radius+5, centerY-25);
+            ctxCircle.fillStyle = "#e84393"; ctxCircle.fillText(`csc=${trigCurr.csc.toFixed(2)}`, centerX+radius+5, centerY-10);
+            
+            ctxCircle.beginPath(); ctxCircle.arc(px, py, 7, 0, 2*Math.PI); ctxCircle.fillStyle = "#f39c12"; ctxCircle.fill();
+            ctxCircle.beginPath(); ctxCircle.arc(px, py, 3, 0, 2*Math.PI); ctxCircle.fillStyle = "#fff"; ctxCircle.fill();
+            ctxCircle.fillStyle = "#1e4660"; ctxCircle.font = "bold 12px"; ctxCircle.fillText(`${angleDeg.toFixed(1)}°`, centerX+25, centerY-30);
+            ctxCircle.restore();
+        }
+        
+        function drawAllGraphs(currentAngle) {
+            drawOneGraph(ctxSin, 500, 160, history.sin, "#e34234", RANGES.sin, "sin", currentAngle);
+            drawOneGraph(ctxCos, 500, 160, history.cos, "#2c7da0", RANGES.cos, "cos", currentAngle);
+            drawOneGraph(ctxTan, 500, 160, history.tan, "#e67e22", RANGES.tan, "tan", currentAngle);
+            drawOneGraph(ctxCot, 500, 160, history.cot, "#27ae60", RANGES.cot, "cot", currentAngle);
+            drawOneGraph(ctxSec, 500, 160, history.sec, "#9b59b6", RANGES.sec, "sec", currentAngle);
+            drawOneGraph(ctxCsc, 500, 160, history.csc, "#e84393", RANGES.csc, "csc", currentAngle);
+        }
+        
+        function drawAll() {
+            updateCircleSize();
+            drawUnitCircle();
+            drawAllGraphs(angleDeg);
+            angleDisplay.innerText = angleDeg.toFixed(1) + "°";
+            thetaSlider.value = angleDeg;
+        }
+        
+        function onSliderChange() {
+            if (isAnimating) stopAnimation();
+            angleDeg = parseFloat(thetaSlider.value);
+            if (angleDeg > 360) angleDeg = 360;
+            if (angleDeg < 0) angleDeg = 0;
+            updateHistoryUpTo(angleDeg);
+            drawAll();
+        }
+        
+        function animateStep() {
+            if (!isAnimating) return;
+            let nd = angleDeg + SPEED;
+            if (nd >= 360) { nd = 360; drawAll(); stopAnimation(); return; }
+            angleDeg = nd;
+            updateHistoryUpTo(angleDeg);
+            drawAll();
+            animationId = requestAnimationFrame(animateStep);
+        }
+        function startAnimation() { if (isAnimating) return; if (angleDeg >= 360) { angleDeg = 0; updateHistoryUpTo(0); drawAll(); } isAnimating = true; animateStep(); }
+        function stopAnimation() { if (animationId) cancelAnimationFrame(animationId); animationId = null; isAnimating = false; }
+        function resetAll() { stopAnimation(); angleDeg = 0; for(let i=0;i<=360;i++) { history.sin[i]=0; history.cos[i]=0; history.tan[i]=0; history.cot[i]=0; history.sec[i]=0; history.csc[i]=0; } updateHistoryUpTo(0); drawAll(); }
+        
+        function init() {
+            updateCircleSize();
+            resetAll();
+            thetaSlider.addEventListener('input', onSliderChange);
+            playBtn.addEventListener('click', startAnimation);
+            pauseBtn.addEventListener('click', stopAnimation);
+            resetBtn.addEventListener('click', resetAll);
+        }
+        init();
+    })();
+</script>
+</body>
+</html>
