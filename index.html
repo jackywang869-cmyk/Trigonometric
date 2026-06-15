@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>六三角函数 · 单位圆 | 含渐近线 + 紧凑纵轴 (无tan89°特殊标注)</title>
+    <title>六三角函数 · 单位圆 | 含渐近线 + 紧凑纵轴 (动画精确停在360°)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -167,7 +167,7 @@
             <div class="inf-note">📐 单位圆 | 正切/正割线延伸至无穷 → 图像含渐近线 (虚线) + 紧凑纵轴，曲线自然逼近渐近线后断裂</div>
         </div>
 
-        <!-- 右侧六函数图像网格：包含渐近线（虚线）且纵轴紧凑，无特殊角度标注 -->
+        <!-- 右侧六函数图像网格：包含渐近线（虚线）且纵轴紧凑 -->
         <div class="graphs-area">
             <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#e34234;"></span> sin θ · 正弦</div><canvas id="sinCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
             <div class="graph-card"><div class="graph-header"><span class="color-badge" style="background:#2c7da0;"></span> cos θ · 余弦</div><canvas id="cosCanvas" class="graph-canvas" width="500" height="160"></canvas></div>
@@ -183,9 +183,9 @@
         <button id="pauseBtn">⏸ 暂停</button>
         <button id="resetBtn">⟳ 重置</button>
         <div class="slider-container"><span>θ =</span><input type="range" id="thetaSlider" min="0" max="360" step="0.1" value="0"><span id="angleDisplay" class="angle-value">0.0°</span></div>
-        <div class="legend">🔴sin 🔵cos 🟠tan 🟢cot 🟣sec 🌸csc &nbsp;&nbsp;| 渐近线为红色虚线 + ∞ 符号，曲线自然逼近并断裂 (无 tan89° 特殊标注)</div>
+        <div class="legend">🔴sin 🔵cos 🟠tan 🟢cot 🟣sec 🌸csc &nbsp;&nbsp;| 渐近线红色虚线 + ∞ 符号，曲线逼近后断裂，动画精确终止于360°</div>
     </div>
-    <footer>✔ 含渐近线 (垂直虚线) + 紧凑纵轴 (tan/cot: -3.2~3.2, sec/csc: -3.6~3.6)。曲线逼近渐近线后断裂，所有函数统一风格，无单独角度数值标注。</footer>
+    <footer>✔ 动画修正：从0°匀速增加，精确停止在360° (而非359°)，完整展示一个周期。含渐近线、紧凑纵轴，无特殊角度标注。</footer>
 </div>
 
 <script>
@@ -286,7 +286,8 @@
                 history.sec[d] = trig.sec;
                 history.csc[d] = trig.csc;
             }
-            if (currentDeg >= 359.9) {
+            // 如果角度达到或超过359.9度，确保完整填充360度数据，保证360°图形完整
+            if (currentDeg >= 359.95 || Math.abs(currentDeg - 360) < 0.1) {
                 for (let d = 0; d <= 360; d++) {
                     const trig = computeAllTrig(d);
                     history.sin[d] = trig.sin;
@@ -308,7 +309,7 @@
             return height * (1 - t);
         }
         
-        // 绘制单个图像 + 渐近线 (虚线) + ∞ 符号，无特殊角度数值标注
+        // 绘制单个图像 + 渐近线 (虚线) + ∞ 符号
         function drawOneGraph(ctx, width, height, dataArray, color, range, funcName, currentDeg) {
             ctx.clearRect(0, 0, width, height);
             ctx.save();
@@ -415,7 +416,7 @@
             ctx.strokeStyle = "#ffb347"; ctx.lineWidth = 1.8; ctx.setLineDash([5,6]); ctx.stroke();
             ctx.setLineDash([]);
             
-            // 当前数值点 (显示数值，但不标注特定角度如89°)
+            // 当前数值点 (显示数值)
             const curTrig = computeAllTrig(currentDeg);
             let currentVal = 0;
             switch(funcName) {
@@ -436,7 +437,6 @@
                     ctx.fillText(`${currentVal.toFixed(3)}`, cursorX+6, dotY-5);
                 }
             } else if (isNaN(currentVal) && (funcName === 'tan' || funcName === 'cot' || funcName === 'sec' || funcName === 'csc')) {
-                // 在渐近线位置显示±∞符号 (通用，无特定角度)
                 ctx.font = "bold 12px monospace";
                 ctx.fillStyle = "#d9534f";
                 ctx.fillText("±∞", cursorX+5, yZero-10);
@@ -535,18 +535,51 @@
             drawAll();
         }
         
+        // 修正动画：确保最后一步精确到达360°
         function animateStep() {
             if (!isAnimating) return;
-            let nd = angleDeg + SPEED;
-            if (nd >= 360) { nd = 360; drawAll(); stopAnimation(); return; }
-            angleDeg = nd;
+            let nextDeg = angleDeg + SPEED;
+            if (nextDeg >= 360) {
+                // 到达或超过360，直接设定为360并停止
+                angleDeg = 360;
+                updateHistoryUpTo(angleDeg);
+                drawAll();
+                stopAnimation();
+                return;
+            }
+            angleDeg = nextDeg;
             updateHistoryUpTo(angleDeg);
             drawAll();
             animationId = requestAnimationFrame(animateStep);
         }
-        function startAnimation() { if (isAnimating) return; if (angleDeg >= 360) { angleDeg = 0; updateHistoryUpTo(0); drawAll(); } isAnimating = true; animateStep(); }
-        function stopAnimation() { if (animationId) cancelAnimationFrame(animationId); animationId = null; isAnimating = false; }
-        function resetAll() { stopAnimation(); angleDeg = 0; for(let i=0;i<=360;i++) { history.sin[i]=0; history.cos[i]=0; history.tan[i]=0; history.cot[i]=0; history.sec[i]=0; history.csc[i]=0; } updateHistoryUpTo(0); drawAll(); }
+        
+        function startAnimation() { 
+            if (isAnimating) return; 
+            if (angleDeg >= 360) { 
+                angleDeg = 0; 
+                updateHistoryUpTo(0); 
+                drawAll(); 
+            } 
+            isAnimating = true; 
+            animateStep(); 
+        }
+        
+        function stopAnimation() { 
+            if (animationId) cancelAnimationFrame(animationId); 
+            animationId = null; 
+            isAnimating = false; 
+        }
+        
+        function resetAll() { 
+            stopAnimation(); 
+            angleDeg = 0; 
+            for(let i=0;i<=360;i++) { 
+                history.sin[i]=0; history.cos[i]=0; history.tan[i]=0; 
+                history.cot[i]=0; history.sec[i]=0; history.csc[i]=0; 
+            } 
+            updateHistoryUpTo(0); 
+            drawAll(); 
+        }
         
         function init() {
             updateCircleSize();
